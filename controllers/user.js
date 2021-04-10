@@ -4,16 +4,16 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     if (email == "" || email == undefined) {
-      //
+      return res.status(404).send("Email is required");
     }
     if (password == "" || password == undefined) {
-      //
+      return res.status(404).send("password is required");
     }
-    const exists = await User.findOne({ email });
-    if (exists) {
-      const isMatch = await comparePassword(password, exists.password);
+    const user = await User.findOne({ email });
+    if (user) {
+      const isMatch = await comparePassword(password, user.password);
       if (isMatch) {
-        const token = await createJWTToken(exists);
+        const token = await createJWTToken(user);
         return res.status(200).json({
           token: "Bearer " + token,
           user: {
@@ -27,8 +27,9 @@ const login = async (req, res) => {
     } else {
       return res.status(400).send("User doesn't exists");
     }
-  } catch (error) {
-    return res.status(500).send("Server error!", error);
+  } catch (err) {
+    return res.status(500).json({ err: err.message });
+
   }
 };
 
@@ -37,15 +38,12 @@ const signup = async (req, res) => {
   try {
     if (email == "" || email == undefined) {
       return res.status(404).send("Email is required");
-
     }
     if (password == "" || password == undefined) {
       return res.status(404).send("password is required");
-
     }
     if (role == "" || role == undefined) {
       return res.status(404).send("Role is required");
-
     }
     const exists = await User.findOne({ email: email });
     if (exists) {
@@ -64,16 +62,20 @@ const signup = async (req, res) => {
         role: user.role,
       },
     });
-  } catch (error) {
-    return res.status(500).send("Server error!", error);
+  } catch (err) {
+    return res.status(500).json({ err: err.message });
 
   }
 };
 
 var allUsers = async (req, res) => {
   try {
-    const users = await User.find();
-  } catch (err) {}
+    const users = await User.find({});
+    return res.status(200).json({users});
+  } catch (err) {
+   return res.status(500).json({ err: err.message });
+
+  }
 };
 
 module.exports = {
